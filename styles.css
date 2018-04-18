@@ -1,0 +1,65 @@
+* {
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+button {
+  height: 40px;
+  width: 60px;
+  background: white;
+  border: 1px solid dimgray;
+  font-size: 1.3rem;
+  outline: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: gold;
+}
+
+.row {
+  display: flex;
+}
+
+.row > :first-child {
+  margin-left: 0;
+}
+
+.row > * {
+  margin-left: -1px;
+}
+
+.col {
+  display: inline-block;
+}
+
+.col:first-child {
+  margin-top: 0px;
+}
+
+.col > .row {
+  margin-top: -1px;
+}
+
+.utility-action {
+  background: cornsilk;
+}
+
+.accent-action {
+  background: cornsilk;
+}
+
+.double-width-action {
+  width: 119px;
+}
+
+.display {
+  background: dimgray;
+  color: white;
+  height: 60px;
+  line-height: 60px;
+  width: 237px;
+  font-size: 3rem;
+  text-align: right;
+  padding: 0 10px;
+  box-sizing: border-box;
+}

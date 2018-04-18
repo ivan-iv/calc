@@ -1,0 +1,47 @@
+<link rel="stylesheet" href="./styles.css" type="text/css">
+<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" rel="stylesheet">
+
+<body>
+  <div class="display">
+    <span id="result">0</span>
+  </div>
+
+  <div id="controls" class="col">
+    <div class="row">
+      <button id="clean" data-token="clean" class="utility-action">AC</button>
+      <button data-token="sign" class="utility-action">+/-</button>
+      <button data-token="%" class="utility-action">%</button>
+      <button data-token="/" class="accent-action">÷</button>
+    </div>
+
+    <div class="row">
+      <button data-token="7">7</button>
+      <button data-token="8">8</button>
+      <button data-token="9">9</button>
+      <button data-token="*" class="accent-action">×</button>
+    </div>
+
+    <div class="row">
+      <button data-token="4">4</button>
+      <button data-token="5">5</button>
+      <button data-token="6">6</button>
+      <button data-token="-" class="accent-action">-</button>
+    </div>
+
+    <div class="row">
+      <button data-token="1">1</button>
+      <button data-token="2">2</button>
+      <button data-token="3">3</button>
+      <button data-token="+" class="accent-action">+</button>
+    </div>
+
+    <div class="row">
+      <button data-token="0" class="double-width-action">0</button>
+      <button data-token=",">,</button>
+      <button data-token="=" class="accent-action">=</button>
+    </div>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ramda/0.25.0/ramda.min.js"></script>
+  <script src="./main.js"></script>
+</body>
