@@ -4,13 +4,12 @@ const isClean = (x) => x === 'clean'
 const isOperation = (x) => '+-/*'.indexOf(x) >= 0
 const isPercentage = (x) => x === '%'
 const isDigit = (x) => '0123456789'.indexOf(x) >= 0
-const isNumber = (x) => !Number.isNaN(parseInt(x))
+const isNumber = (x) => !Number.isNaN(Number.parseFloat(x))
 const isZero = (x) => x === '0'
 const isDelimiter = (x) => x === ','
 const isFloat = (x) => x.indexOf('.') >= 0
 const isNegativeNumber = (x) => x[0] === '-'
-const operationCount = (x) =>
-  x.reduce((acc, cur) => isOperation(cur) ? acc + 1 : acc, 0)
+const operationCount = (x) => x.reduce((acc, cur) => isOperation(cur) ? acc + 1 : acc, 0)
 
 const Priority = {
   '+': 1,
@@ -40,38 +39,38 @@ function takeLastNumber(tokens) {
 }
 
 function takeLastOperation(tokens) {
-  for (let i = tokens.length - 1; i >= 0; i--) {
-    if (isOperation(tokens[i])) {
-      return {
-        value: tokens[i],
-        arg1: tokens[i - 1],
-        arg2: tokens[i + 1],
-        position: i
-      }
+  const index = R.findLastIndex(isOperation, tokens)
+
+  if (index >= 0) {
+    return {
+      value: tokens[index],
+      arg1: tokens[index - 1],
+      arg2: tokens[index + 1],
+      position: index
     }
   }
 
   return null
 }
 
-function takeOperationAt(position, tokens) {
+function takeOperationAt(index, tokens) {
   return {
-    value: tokens[position],
-    arg1: tokens[position - 1],
-    arg2: tokens[position + 1]
+    value: tokens[index],
+    arg1: tokens[index - 1],
+    arg2: tokens[index + 1]
   }
 }
 
-function performOperation(position, tokens) {
-  const { value, arg1, arg2 } = takeOperationAt(position, tokens)
+function performOperation(index, tokens) {
+  const { value, arg1, arg2 } = takeOperationAt(index, tokens)
 
   return R.pipe(
-    R.remove(position - 1, 3),
-    R.insert(position - 1, Operations[value](arg1, arg2).toString())
+    R.remove(index - 1, 3),
+    R.insert(index - 1, Operations[value](arg1, arg2).toString())
   )(tokens)
 }
 
-function calcAll(tokens) {
+function performAllOperations(tokens) {
   for (let i = 0; i < tokens.length; i++) {
     if (isOperation(tokens[i]) && Priority[tokens[i]] > 1) {
       tokens = performOperation(i, tokens)
@@ -88,16 +87,12 @@ function calcAll(tokens) {
   return tokens
 }
 
-function noNumbers(tokens) {
-  return (tokens.length === 1 && isZero(tokens[0])) || tokens.every(x => !isNumber(x))
-}
-
 function handleEq(state) {
-  const { tokens } = state
+  const { tokens, lastOp, lastArg } = state
 
-  if (tokens.length === 1 && state.lastOp && state.lastArg) {
+  if (tokens.length === 1 && lastOp && lastArg) {
     return handleEq(
-      R.assoc('tokens', R.concat(tokens, [state.lastOp, state.lastArg]), state)
+      R.assoc('tokens', R.concat(tokens, [lastOp, lastArg]), state)
     )
   }
 
@@ -110,11 +105,11 @@ function handleEq(state) {
   if (isOperation(lastToken)) {
     const lastNumber = takeLastNumber(tokens)
 
-    return handleEq(R.assoc('tokens', R.append(lastNumber.value), tokens), state)
+    return handleEq(R.assoc('tokens', R.append(lastNumber.value, tokens), state))
   }
 
   return R.merge(state, {
-    tokens: calcAll(tokens),
+    tokens: performAllOperations(tokens),
     lastOp: takeLastOperation(tokens).value,
     lastArg: takeLastNumber(tokens).value
   })
@@ -218,6 +213,7 @@ function performCalc(state, token) {
       return Handlers[i].handler(state, token)
     }
   }
+
   return state
 }
 
@@ -236,10 +232,10 @@ $controls.addEventListener('click', (ev) => {
 
   console.log(state)
 
-  if (noNumbers(state.tokens)) {
-    $cleanBtn.innerText = 'AC'
-  } else {
+  if (state.tokens.length > 1 || !isZero(state.tokens[0])) {
     $cleanBtn.innerText = 'C'
+  } else {
+    $cleanBtn.innerText = 'AC'
   }
 
   $result.innerText = takeLastNumber(state.tokens).value
