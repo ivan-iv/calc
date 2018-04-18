@@ -95,7 +95,7 @@
     if (tokens.length === 1 && lastOp && lastArg) {
       return handleEq(
         R.assoc('tokens', R.concat(tokens, [lastOp, lastArg]), state)
-        )
+      )
     }
 
     if (tokens.length === 1) {
@@ -130,9 +130,9 @@
         position,
         isNegativeNumber(value) ? R.tail(value) : `-${value}`,
         state.tokens
-        ),
+      ),
       state
-      )
+    )
   }
 
   function handleClean(state) {
@@ -158,7 +158,7 @@
         return handleOperation(
           R.assoc('tokens', performOperation(position, state.tokens), state),
           op
-          )
+        )
       }
     }
 
