@@ -70,136 +70,136 @@
       R.remove(index - 1, 3),
       R.insert(index - 1, Operations[value](arg1, arg2).toString())
       )(tokens)
+  }
+
+  function performAllOperations(tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+      if (isOperation(tokens[i]) && Priority[tokens[i]] > 1) {
+        tokens = performOperation(i, tokens)
+      }
     }
 
-    function performAllOperations(tokens) {
-      for (let i = 0; i < tokens.length; i++) {
-        if (isOperation(tokens[i]) && Priority[tokens[i]] > 1) {
-          tokens = performOperation(i, tokens)
-        }
+    for (let i = 0; i < tokens.length; i++) {
+      if (isOperation(tokens[i])) {
+        tokens = performOperation(i, tokens)
+        i--;
       }
-
-      for (let i = 0; i < tokens.length; i++) {
-        if (isOperation(tokens[i])) {
-          tokens = performOperation(i, tokens)
-          i--;
-        }
-      }
-
-      return tokens
     }
 
-    function handleEq(state) {
-      const { tokens, lastOp, lastArg } = state
+    return tokens
+  }
 
-      if (tokens.length === 1 && lastOp && lastArg) {
-        return handleEq(
-          R.assoc('tokens', R.concat(tokens, [lastOp, lastArg]), state)
-          )
-      }
+  function handleEq(state) {
+    const { tokens, lastOp, lastArg } = state
 
-      if (tokens.length === 1) {
-        return state
-      }
-
-      const lastToken = R.last(tokens)
-
-      if (isOperation(lastToken)) {
-        const lastNumber = takeLastNumber(tokens)
-
-        return handleEq(R.assoc('tokens', R.append(lastNumber.value, tokens), state))
-      }
-
-      return R.merge(state, {
-        tokens: performAllOperations(tokens),
-        lastOp: takeLastOperation(tokens).value,
-        lastArg: takeLastNumber(tokens).value
-      })
-    }
-
-    function handleSign(state) {
-      const { value, position } = takeLastNumber(state.tokens)
-
-      if (value === '0') {
-        return state
-      }
-
-      return R.assoc(
-        'tokens',
-        R.update(
-          position,
-          isNegativeNumber(value) ? R.tail(value) : `-${value}`,
-          state.tokens
-          ),
-        state
+    if (tokens.length === 1 && lastOp && lastArg) {
+      return handleEq(
+        R.assoc('tokens', R.concat(tokens, [lastOp, lastArg]), state)
         )
     }
 
-    function handleClean(state) {
-      return {
-        tokens: ['0'],
-        lastArg: null,
-        lastOp: null
-      }
+    if (tokens.length === 1) {
+      return state
     }
 
-    function handleOperation(state, op) {
-      const lastToken = R.last(state.tokens)
+    const lastToken = R.last(tokens)
 
-      if (isOperation(lastToken)) {
-        return R.assoc('tokens',
-          R.update(lastToken.position, op, state.tokens), state)
-      }
+    if (isOperation(lastToken)) {
+      const lastNumber = takeLastNumber(tokens)
 
-      if (operationCount(state.tokens) >= 1) {
-        const { value, arg1, arg2, position } = takeLastOperation(state.tokens)
-
-        if (Priority[value] >= Priority[op]) {
-          return handleOperation(
-            R.assoc('tokens', performOperation(position, state.tokens), state),
-            op
-            )
-        }
-      }
-
-      return R.assoc('tokens', R.append(op, state.tokens), state)
+      return handleEq(R.assoc('tokens', R.append(lastNumber.value, tokens), state))
     }
 
-    function handlePercentage(state) {
-      const { value, position } = takeLastNumber(state.tokens)
+    return R.merge(state, {
+      tokens: performAllOperations(tokens),
+      lastOp: takeLastOperation(tokens).value,
+      lastArg: takeLastNumber(tokens).value
+    })
+  }
 
+  function handleSign(state) {
+    const { value, position } = takeLastNumber(state.tokens)
+
+    if (value === '0') {
+      return state
+    }
+
+    return R.assoc(
+      'tokens',
+      R.update(
+        position,
+        isNegativeNumber(value) ? R.tail(value) : `-${value}`,
+        state.tokens
+        ),
+      state
+      )
+  }
+
+  function handleClean(state) {
+    return {
+      tokens: ['0'],
+      lastArg: null,
+      lastOp: null
+    }
+  }
+
+  function handleOperation(state, op) {
+    const lastToken = R.last(state.tokens)
+
+    if (isOperation(lastToken)) {
       return R.assoc('tokens',
-        R.update(position, Number.parseFloat(value) / 100, state.tokens), state)
+        R.update(lastToken.position, op, state.tokens), state)
     }
 
-    function handleDigit(state, digit) {
-      const lastToken = R.last(state.tokens)
+    if (operationCount(state.tokens) >= 1) {
+      const { value, arg1, arg2, position } = takeLastOperation(state.tokens)
 
-      if (isZero(lastToken)) {
-        return R.assoc('tokens',
-          R.update(state.tokens.length - 1, digit, state.tokens), state)
+      if (Priority[value] >= Priority[op]) {
+        return handleOperation(
+          R.assoc('tokens', performOperation(position, state.tokens), state),
+          op
+          )
       }
-
-      if (isNumber(lastToken)) {
-        const val = `${lastToken}${digit}`
-        return R.assoc('tokens',
-          R.update(state.tokens.length - 1, val, state.tokens), state)
-      }
-
-      return R.assoc('tokens', R.append(digit, state.tokens), state)
     }
 
-    function handleDelimiter(state) {
-      const { value, position } = takeLastNumber(state.tokens)
+    return R.assoc('tokens', R.append(op, state.tokens), state)
+  }
 
-      if (isFloat(value)) {
-        return state
-      }
+  function handlePercentage(state) {
+    const { value, position } = takeLastNumber(state.tokens)
 
-      return R.assoc('tokens', R.update(position, `${value}.`, state.tokens), state)
+    return R.assoc('tokens',
+      R.update(position, Number.parseFloat(value) / 100, state.tokens), state)
+  }
+
+  function handleDigit(state, digit) {
+    const lastToken = R.last(state.tokens)
+
+    if (isZero(lastToken)) {
+      return R.assoc('tokens',
+        R.update(state.tokens.length - 1, digit, state.tokens), state)
     }
 
-    const Handlers = [
+    if (isNumber(lastToken)) {
+      const val = `${lastToken}${digit}`
+      return R.assoc('tokens',
+        R.update(state.tokens.length - 1, val, state.tokens), state)
+    }
+
+    return R.assoc('tokens', R.append(digit, state.tokens), state)
+  }
+
+  function handleDelimiter(state) {
+    const { value, position } = takeLastNumber(state.tokens)
+
+    if (isFloat(value)) {
+      return state
+    }
+
+    return R.assoc('tokens', R.update(position, `${value}.`, state.tokens), state)
+  }
+
+  const Handlers = [
     { cond: isEq, handler: handleEq },
     { cond: isSign, handler: handleSign },
     { cond: isClean, handler: handleClean },
@@ -207,40 +207,40 @@
     { cond: isPercentage, handler: handlePercentage },
     { cond: isDigit, handler: handleDigit },
     { cond: isDelimiter, handler: handleDelimiter }
-    ]
+  ]
 
-    function performCalc(state, token) {
-      for (let i = 0; i < Handlers.length; i++) {
-        if (Handlers[i].cond(token)) {
-          return Handlers[i].handler(state, token)
-        }
+  function performCalc(state, token) {
+    for (let i = 0; i < Handlers.length; i++) {
+      if (Handlers[i].cond(token)) {
+        return Handlers[i].handler(state, token)
       }
-
-      return state
     }
 
-    const $result = document.querySelector('#result')
-    const $controls = document.querySelector('#controls')
-    const $cleanBtn = document.querySelector('#clean')
+    return state
+  }
 
-    let state = {
-      tokens: ['0'],
-      lastArg: null,
-      lastOp: null
+  const $result = document.querySelector('#result')
+  const $controls = document.querySelector('#controls')
+  const $cleanBtn = document.querySelector('#clean')
+
+  let state = {
+    tokens: ['0'],
+    lastArg: null,
+    lastOp: null
+  }
+
+  $controls.addEventListener('click', (ev) => {
+    state = performCalc(state, ev.target.dataset.token)
+
+    console.log(state)
+
+    if (state.tokens.length > 1 || !isZero(state.tokens[0])) {
+      $cleanBtn.innerText = 'C'
+    } else {
+      $cleanBtn.innerText = 'AC'
     }
 
-    $controls.addEventListener('click', (ev) => {
-      state = performCalc(state, ev.target.dataset.token)
-
-      console.log(state)
-
-      if (state.tokens.length > 1 || !isZero(state.tokens[0])) {
-        $cleanBtn.innerText = 'C'
-      } else {
-        $cleanBtn.innerText = 'AC'
-      }
-
-      $result.innerText = takeLastNumber(state.tokens).value
-    })
+    $result.innerText = takeLastNumber(state.tokens).value
+  })
 
 })()
