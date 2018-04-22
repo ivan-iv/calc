@@ -69,7 +69,7 @@
     return R.pipe(
       R.remove(index - 1, 3),
       R.insert(index - 1, Operations[value](arg1, arg2).toString())
-      )(tokens)
+    )(tokens)
   }
 
   function performAllOperations(tokens) {
